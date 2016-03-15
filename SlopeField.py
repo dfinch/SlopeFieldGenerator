@@ -40,9 +40,12 @@ canvas.create_line(300, 0, 300, 600, fill="red")
 canvas.create_rectangle(0, 600, 600, 700, fill="gray75")
 
 print("Parsing expression...")
-RPNqueue = Parser.parseMathExpression("(x - y)")
+RPNqueue = Parser.parseMathExpression("sin((x+y)/pi)")
 print("Finished parsing expression.")
-validEquation = Calculator.checkValid(RPNqueue)
+
+validEquation = False
+if RPNqueue is not None:
+    validEquation = Calculator.checkValid(RPNqueue)
 
 if validEquation:
     lineradius = linesize / 2

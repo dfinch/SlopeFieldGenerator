@@ -8,7 +8,7 @@ def checkValid(Q):
     
     print("Printing instruction queue:")
     for e in Q:
-        print(e)
+        print(str(e))
     
 
     # Iterate over the queue, treating each element as either an operator or a value to push

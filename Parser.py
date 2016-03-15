@@ -73,6 +73,17 @@ def parseMathExpression(expr):
         i = 0
         currToken = None
         while i < len(expr):
+            print("___________________________________")
+            print("Prev token: " + str(prevTokenType))
+            print("midStack:")
+            for se in midStack:
+                print(str(se))
+
+            print("outQueue:")
+            for oe in outQueue:
+                print(str(oe))
+            print("Expr[i]: " + expr[i])
+            
             # Skip whitespace
             if expr[i].isspace():
                 i += 1
@@ -98,7 +109,7 @@ def parseMathExpression(expr):
                     print("Parser.py: Error: Word token is invalid.")
                     break
                 # Else increment i, and add the variable/ token to the queue/ stack
-                if currToken == 'x' or currToken == 'y':
+                if currToken == 'x' or currToken == 'y' or currToken == 'pi' or currToken == 'PI' or currToken == 'Pi' or currToken == 'e':
                     # If the previous token was an end parentheses, consider this multiplication
                     if prevTokenType == ')':
                         expr = expr[:i-1] + '*' + expr[i:]
@@ -110,13 +121,17 @@ def parseMathExpression(expr):
                     prevTokenType = "procedure"
                 i += len(currToken)
             # If token is a left parenthesis, add it to the operator stack
-            elif expr[i] == '(':
+            elif expr[i] == '(' or expr[i] == '[':
                 # If the previous token was an end parentheses, consider this multiplication
                 if prevTokenType == ')' or prevTokenType == "variable":
+                    print("Adding * to expression")
                     expr = expr[:i-1] + '*' + expr[i:]
                     prevTokenType = None
-                midStack.append('(')
-                prevTokenType = "leftparen"
+                else:
+                    print("Adding ( to stack")
+                    i += 1
+                    midStack.append('(')
+                    prevTokenType = "leftparen"
             # If token is a comma, pop operators off the stack until finding a left parenthesis
             elif expr[i] == ',':
                 tempToken = ','
@@ -126,6 +141,7 @@ def parseMathExpression(expr):
                     tempToken = midStack[-1]
                     if tempToken != '(':
                         midStack.pop()
+                        print("Appending " + str(tempToken) + " to queue")
                         outQueue.append(tempToken)
                 # Ensure proper use of parentheses
                 if len(midStack) == 0:
@@ -133,7 +149,7 @@ def parseMathExpression(expr):
                     print("Parser.py: Error: Invalid use of ',' separator.")
                     break
             # If token is an end parenthesis, pop operators off the stack until consuming a left parenthesis
-            elif expr[i] == ')':
+            elif expr[i] == ')' or expr[i] == ']':
                 tempToken = ')'
                 i += 1
                 # Loop over the operator stack until encountering the nearest left parenthesis
@@ -141,15 +157,20 @@ def parseMathExpression(expr):
                     tempToken = midStack[-1]
                     if tempToken != '(':
                         midStack.pop()
-                        outQueue.append(tempToken)
+                        print("Appending " + str(tempToken) + " to queue")
+                        outQueue.append(tempToken[0])
                 # Ensure proper use of parentheses
                 if len(midStack) == 0:
                     valid = False
-                    print("Parser.py: Error: Mismatched parentheses.")
+                    print("Parser.py: Error: Mismatched parentheses. (extra close paren)")
                     break
                 # tempToken must be an open parentheses, so pop it off the stack
                 midStack.pop()
                 prevTokenType = "rightparen"
+
+                ###### TODO ######
+                # Check if next operator on the stack is a function call
+                
             
             # Else parse the expression for an operator
             else:
@@ -169,11 +190,11 @@ def parseMathExpression(expr):
                         break
                     
                     opStackPrecedence = -1
-                    # Ensure that the top of the operator stack is an operator, else assume highest precedence
+                    # Ensure that the top of the operator stack is an operator, else assume lowest precedence
                     if len(midStack[-1]) > 1:
                         opStackPrecedence = midStack[-1][1]
                     else:
-                        opStackPrecedence = 5
+                        opStackPrecedence = -1
                     if currToken[2] == "ltr":
                         # If encountering a unary minus operator, insert replacement tokens into the expression
                         if currToken[0] == '-' and (prevTokenType == '(' or prevTokenType == '*' or prevTokenType is None):
@@ -183,15 +204,19 @@ def parseMathExpression(expr):
                             done = True
                             break
                         if currToken[1] <= opStackPrecedence:
-                            outQueue.append(midStack[-1])
+                            outQueue.append(midStack[-1][0])
                             midStack.pop()
+                            print("operator is ltr; popping top of op stack")
                         else:
+                            print("operator is ltr; precedence > top of stack operator")
                             done = True
                     else:
                         if currToken[1] < opStackPrecedence:
-                            outQueue.append(midStack[-1])
+                            outQueue.append(midStack[-1][0])
                             midStack.pop()
+                            print("operator is rtl; popping top of op stack")
                         else:
+                            print("operator is rtl; precedence >= top of stack operator")
                             done = True
 
                 # If a unary minus was encountered, read the replaced token
@@ -219,10 +244,16 @@ def parseMathExpression(expr):
     # If the queue is valid, reformat it, and replace operator list-structs with just the operator
     if valid:
         # Remove all traces of operator precedence or associativity from the RPN output queue
+        """
         for i in range(0, len(outQueue)):
 #            print("outQueue[i] = " + str(outQueue[i]) + ",   len(outQueue[i]) = " + str(len(outQueue[i])))
             if len(outQueue[i]) > 1:
+                #try:
+                #    test = int(outQueue[1])
                 outQueue[i] = outQueue[i][0]
+                #except ValueError:
+                #    pass
+        """
         return outQueue
     else:
         print("Parser.py: Error: Invalid expression.")
